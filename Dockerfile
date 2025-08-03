@@ -6,6 +6,6 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Copy WAR as ROOT
 COPY product_online.war /usr/local/tomcat/webapps/ROOT.war
 
-EXPOSE 9091
+EXPOSE 8080
 
 CMD ["catalina.sh", "run"]
