@@ -1,0 +1,63 @@
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/ProductServlet")
+public class ProductServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    private static final String SUPABASE_URL = "https://wfddjgbtjspqervkpyhx.supabase.co";
+    private static final String API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZGRqZ2J0anNwcWVydmtweWh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDIzNzksImV4cCI6MjA2OTc3ODM3OX0.pOUTBO1j2acGj9j7EKpUGSX7JvszhL-xJCIIsd4hWDQ";
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // 1. Get form parameters
+        String name = request.getParameter("name");
+        String price = request.getParameter("price");
+        String imageUrl = request.getParameter("image_url");
+        String description = request.getParameter("description");
+
+        // 2. Build JSON string
+        String jsonInputString = String.format(
+            "{\"name\":\"%s\", \"price\":%s, \"image_url\":\"%s\", \"description\":\"%s\"}",
+            name, price, imageUrl, description
+        );
+
+        // 3. Connect to Supabase
+        URL url = new URL(SUPABASE_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("apikey", API_KEY);
+        conn.setRequestProperty("Authorization", "Bearer " + API_KEY);
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+
+        // 4. Send JSON to Supabase
+        try (OutputStream os = conn.getOutputStream()) {
+            byte[] input = jsonInputString.getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        // 5. Read Supabase response
+        int status = conn.getResponseCode();
+        InputStream in = (status < HttpURLConnection.HTTP_BAD_REQUEST) ? conn.getInputStream() : conn.getErrorStream();
+        Scanner scanner = new Scanner(in);
+        StringBuilder jsonResponse = new StringBuilder();
+        while (scanner.hasNext()) {
+            jsonResponse.append(scanner.nextLine());
+        }
+        scanner.close();
+
+        // 6. Show response
+        response.setContentType("application/json");
+        response.getWriter().write(jsonResponse.toString());
+    }
+}
+	

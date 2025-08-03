@@ -1,0 +1,79 @@
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/ProductServlet")
+public class ProductServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    // Replace these with your actual values
+    private static final String SUPABASE_URL = "https://<your-project>.supabase.co/rest/v1/products";
+    private static final String API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZGRqZ2J0anNwcWVydmtweWh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDIzNzksImV4cCI6MjA2OTc3ODM3OX0.pOUTBO1j2acGj9j7EKpUGSX7JvszhL-xJCIIsd4hWDQ";
+
+    public ProductServlet() {
+        super();
+    }
+
+    // Handle GET requests (Read products from Supabase)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        URL url = new URL(SUPABASE_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("apikey", API_KEY);
+        conn.setRequestProperty("Authorization", "Bearer " + API_KEY);
+
+        // Read response
+        int status = conn.getResponseCode();
+        InputStream in = (status < HttpURLConnection.HTTP_BAD_REQUEST) ? conn.getInputStream() : conn.getErrorStream();
+        Scanner scanner = new Scanner(in);
+        StringBuilder jsonResponse = new StringBuilder();
+        while (scanner.hasNext()) {
+            jsonResponse.append(scanner.nextLine());
+        }
+        scanner.close();
+
+        response.setContentType("application/json");
+        response.getWriter().write(jsonResponse.toString());
+    }
+
+    // Handle POST requests (Add new product to Supabase)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        URL url = new URL(SUPABASE_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("apikey", API_KEY);
+        conn.setRequestProperty("Authorization", "Bearer " + API_KEY);
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+
+        // JSON input to be posted (can also be dynamically taken from request)
+        String jsonInputString = "{\"name\":\"Choco\",\"price\":45,\"image_url\":\"https://example.com/choco.jpg\",\"description\":\"Tasty\"}";
+
+        try (OutputStream os = conn.getOutputStream()) {
+            byte[] input = jsonInputString.getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        // Read response
+        int status = conn.getResponseCode();
+        InputStream in = (status < HttpURLConnection.HTTP_BAD_REQUEST) ? conn.getInputStream() : conn.getErrorStream();
+        Scanner scanner = new Scanner(in);
+        StringBuilder jsonResponse = new StringBuilder();
+        while (scanner.hasNext()) {
+            jsonResponse.append(scanner.nextLine());
+        }
+        scanner.close();
+
+        response.setContentType("application/json");
+        response.getWriter().write(jsonResponse.toString());
+    }
+}
